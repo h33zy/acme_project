@@ -1,13 +1,17 @@
-# birthday/views.py 
-from django.shortcuts import render
+# birthday/views.py
+from django.shortcuts import render, get_object_or_404, redirect
 
 from .forms import BirthdayForm
 # Импортируем из utils.py функцию для подсчёта дней.
 from .utils import calculate_birthday_countdown
 from .models import Birthday
 
-def birthday(request):
-    form = BirthdayForm(request.POST or None)
+def birthday(request, pk=None):
+    if pk is not None:
+        instance = get_object_or_404(Birthday, pk=pk)
+    else:
+        instance = None
+    form = BirthdayForm(request.POST or None, instance=instance)
     # Создаём словарь контекста сразу после инициализации формы.
     context = {'form': form}
     # Если форма валидна...
@@ -28,3 +32,12 @@ def birthday_list(request):
     template_name = 'birthday/birthday_list.html'
     context = {'birthdays': birthdays}
     return render(request, template_name, context)
+
+def delete_birthday(request, pk):
+    instance = get_object_or_404(Birthday, pk=pk)
+    form = BirthdayForm(instance=instance)
+    context = {'form': form}
+    if request.method == 'POST':
+        instance.delete()
+        return redirect('birthday:list')
+    return render(request, 'birthday/birthday.html', context)
